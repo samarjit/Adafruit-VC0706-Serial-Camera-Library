@@ -49,10 +49,10 @@ Adafruit_VC0706::Adafruit_VC0706(HardwareSerial *ser) {
 
 boolean Adafruit_VC0706::begin(uint16_t baud) {
 #if not defined (_VARIANT_ARDUINO_DUE_X_) && not defined (_VARIANT_ARDUINO_ZERO_)
-  if(swSerial) swSerial->begin(baud);
+  if(swSerial) swSerial->begin(115200);
   else
 #endif
-    hwSerial->begin(baud);
+    hwSerial->begin(115200);
   return reset();
 }
 
@@ -302,6 +302,10 @@ boolean Adafruit_VC0706::resumeVideo() {
   return cameraFrameBuffCtrl(VC0706_RESUMEFRAME); 
 }
 
+boolean Adafruit_VC0706::stepFrame() {
+  return cameraFrameBuffCtrl(VC0706_STEPFRAME); 
+}
+
 boolean Adafruit_VC0706::TVon() {
   uint8_t args[] = {0x1, 0x1};
   return runCommand(VC0706_TVOUT_CTRL, args, sizeof(args), 5);
@@ -313,7 +317,7 @@ boolean Adafruit_VC0706::TVoff() {
 
 boolean Adafruit_VC0706::cameraFrameBuffCtrl(uint8_t command) {
   uint8_t args[] = {0x1, command};
-  return runCommand(VC0706_FBUF_CTRL, args, sizeof(args), 5);
+  return runCommand(VC0706_FBUF_CTRL, args, sizeof(args), 5, true);
 }
 
 uint32_t Adafruit_VC0706::frameLength(void) {
@@ -387,8 +391,8 @@ void Adafruit_VC0706::sendCommand(uint8_t cmd, uint8_t args[] = 0, uint8_t argn 
 
     for (uint8_t i=0; i<argn; i++) {
       swSerial->write((byte)args[i]);
-      //Serial.print(" 0x");
-      //Serial.print(args[i], HEX);
+      Serial.print(" ");
+      Serial.print(args[i], HEX);
     }
 #else
     swSerial->print(0x56, BYTE);
@@ -454,9 +458,9 @@ uint8_t Adafruit_VC0706::readResponse(uint8_t numbytes, uint8_t timeout) {
     camerabuff[bufferLen++] = hwSerial->read();
 #endif
   }
-  //printBuff();
-//camerabuff[bufferLen] = 0;
-//Serial.println((char*)camerabuff);
+ //printBuff();
+ //camerabuff[bufferLen] = 0;
+ //Serial.println((char*)camerabuff);
   return bufferLen;
 }
 

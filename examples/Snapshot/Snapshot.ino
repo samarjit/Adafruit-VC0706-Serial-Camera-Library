@@ -20,7 +20,7 @@
 #include <SD.h>
 
 // comment out this line if using Arduino V23 or earlier
-#include <SoftwareSerial.h>         
+//#include <SoftwareSerial.h>         
 
 // uncomment this line if using Arduino V23 or earlier
 // #include <NewSoftSerial.h>       
@@ -32,7 +32,7 @@
 // Arduino Mega w/hardware SPI: pin 53
 // Teensy 2.0: pin 0
 // Teensy++ 2.0: pin 20
-#define chipSelect 10
+#define chipSelect 53
 
 // Pins for camera connection are configurable.
 // With the Arduino Uno, etc., most pins can be used, except for
@@ -58,18 +58,18 @@
 // Using SoftwareSerial (Arduino 1.0+) or NewSoftSerial (Arduino 0023 & prior):
 #if ARDUINO >= 100
 // On Uno: camera TX connected to pin 2, camera RX to pin 3:
-SoftwareSerial cameraconnection = SoftwareSerial(2, 3);
+//SoftwareSerial cameraconnection = SoftwareSerial(2, 3);
 // On Mega: camera TX connected to pin 69 (A15), camera RX to pin 3:
-//SoftwareSerial cameraconnection = SoftwareSerial(69, 3);
+//SoftwareSerial cameraconnection = SoftwareSerial(2, 3);
 #else
-NewSoftSerial cameraconnection = NewSoftSerial(2, 3);
+//NewSoftSerial cameraconnection = NewSoftSerial(2, 3);
 #endif
 
-Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
+//Adafruit_VC0706 cam = Adafruit_VC0706(&cameraconnection);
 
 // Using hardware serial on Mega: camera TX conn. to RX1,
 // camera RX to TX1, no SoftwareSerial object is required:
-//Adafruit_VC0706 cam = Adafruit_VC0706(&Serial1);
+Adafruit_VC0706 cam = Adafruit_VC0706(&Serial1);
 
 void setup() {
 
@@ -91,11 +91,11 @@ void setup() {
   if (!SD.begin(chipSelect)) {
     Serial.println("Card failed, or not present");
     // don't do anything more:
-    return;
+    //return;
   }  
   
   // Try to locate the camera
-  if (cam.begin()) {
+  if (cam.begin(115200)) {
     Serial.println("Camera Found:");
   } else {
     Serial.println("No camera found?");
@@ -115,8 +115,8 @@ void setup() {
   // Remember that bigger pictures take longer to transmit!
   
   cam.setImageSize(VC0706_640x480);        // biggest
-  //cam.setImageSize(VC0706_320x240);        // medium
-  //cam.setImageSize(VC0706_160x120);          // small
+//  cam.setImageSize(VC0706_320x240);        // medium
+// cam.setImageSize(VC0706_160x120);          // small
 
   // You can read the size back from the camera (optional, but maybe useful?)
   uint8_t imgsize = cam.getImageSize();
@@ -132,7 +132,10 @@ void setup() {
     Serial.println("Failed to snap!");
   else 
     Serial.println("Picture taken!");
-  
+
+  if(cam.stepFrame()){
+    Serial.println("Step Frame!");
+  }
   // Create an image with the name IMAGExx.JPG
   char filename[13];
   strcpy(filename, "IMAGE00.JPG");
@@ -147,7 +150,8 @@ void setup() {
   
   // Open the file for writing
   File imgFile = SD.open(filename, FILE_WRITE);
-
+  Serial.print("Created filename ");Serial.println(filename);
+  
   // Get the size of the image (frame) taken  
   uint16_t jpglen = cam.frameLength();
   Serial.print("Storing ");
@@ -155,13 +159,13 @@ void setup() {
   Serial.print(" byte image.");
 
   int32_t time = millis();
-  pinMode(8, OUTPUT);
+ //pinMode(10, OUTPUT);
   // Read all the data up to # bytes!
   byte wCount = 0; // For counting # of writes
   while (jpglen > 0) {
     // read 32 bytes at a time;
     uint8_t *buffer;
-    uint8_t bytesToRead = min(32, jpglen); // change 32 to 64 for a speedup but may not work with all setups!
+    uint8_t bytesToRead = min(64, jpglen); // change 32 to 64 for a speedup but may not work with all setups!
     buffer = cam.readPicture(bytesToRead);
     imgFile.write(buffer, bytesToRead);
     if(++wCount >= 64) { // Every 2K, give a little feedback so it doesn't appear locked up

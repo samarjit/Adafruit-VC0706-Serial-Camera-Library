@@ -78,6 +78,7 @@ class Adafruit_VC0706 {
   boolean TVon(void);
   boolean TVoff(void);
   boolean takePicture(void);
+  boolean stepFrame(void);
   uint8_t *readPicture(uint8_t n);
   boolean resumeVideo(void);
   uint32_t frameLength(void);
